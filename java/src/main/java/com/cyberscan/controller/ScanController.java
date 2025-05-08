@@ -1,19 +1,29 @@
 package com.cyberscan.controller;
 
 import com.cyberscan.service.ScanService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cyberscan.service.ScanService.ScanResult;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/scan")
 public class ScanController {
 
-    @Autowired
-    private ScanService scanService;
+    private final ScanService scanService;
+
+    public ScanController(ScanService scanService) {
+        this.scanService = scanService;
+    }
 
     @GetMapping("/start")
-    public Map<String, Object> startScan() throws Exception {
-        return scanService.runPythonScan();
+    public CompletableFuture<ResponseEntity<ScanResult>> startScan() {
+        return scanService.runPythonScanAsync()
+                .thenApply(ResponseEntity::ok)
+                .exceptionally(ex -> {
+                    // Logaria aqui no mundo real
+                    return ResponseEntity.status(500).body(null); // ou DTO de erro
+                });
     }
 }
